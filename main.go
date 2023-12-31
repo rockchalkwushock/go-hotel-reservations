@@ -49,7 +49,7 @@ func main() {
 
 		// route versioning
 		auth  = app.Group("/api")
-		apiV1 = app.Group("/api/v1", middleware.JWTAuthentication)
+		apiV1 = app.Group("/api/v1", middleware.JWTAuthentication(userStore))
 	)
 
 	auth.Post("/auth", authHandler.HandleAuthenticate)
