@@ -10,6 +10,7 @@ import (
 )
 
 type RoomStore interface {
+	GetRooms(ctx context.Context, filter bson.M) ([]types.Room, error)
 	InsertRoom(ctx context.Context, room *types.Room) (*types.Room, error)
 }
 
@@ -26,6 +27,20 @@ func NewMongoRoomStore(client *mongo.Client, hotelStore HotelStore) *MongoRoomSt
 		collection: client.Database(DBNAME).Collection("rooms"),
 		HotelStore: hotelStore,
 	}
+}
+
+func (m *MongoRoomStore) GetRooms(ctx context.Context, filter bson.M) ([]types.Room, error) {
+	var rooms []types.Room
+	resp, err := m.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := resp.All(ctx, &rooms); err != nil {
+		return nil, err
+	}
+
+	return rooms, nil
 }
 
 func (m *MongoRoomStore) InsertRoom(ctx context.Context, room *types.Room) (*types.Room, error) {

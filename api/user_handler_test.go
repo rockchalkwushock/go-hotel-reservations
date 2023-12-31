@@ -20,7 +20,7 @@ const (
 )
 
 type testDb struct {
-	db.UserStore
+	store *db.Store
 }
 
 func setup(t *testing.T) *testDb {
@@ -29,13 +29,17 @@ func setup(t *testing.T) *testDb {
 		t.Fatalf("Error connecting to mongo: %v", err)
 	}
 
+	store := &db.Store{
+		User: db.NewMongoUserStore(client),
+	}
+
 	return &testDb{
-		UserStore: db.NewMongoUserStore(client),
+		store: store,
 	}
 }
 
 func (tbd *testDb) teardown(t *testing.T) {
-	if err := tbd.UserStore.Drop(context.TODO()); err != nil {
+	if err := tbd.store.User.Drop(context.TODO()); err != nil {
 		t.Fatalf("Error dropping db: %v", err)
 	}
 }
@@ -45,7 +49,7 @@ func TestPostUser(t *testing.T) {
 	defer tdb.teardown(t)
 
 	app := fiber.New()
-	userHandler := NewUserHandler(tdb.UserStore)
+	userHandler := NewUserHandler(tdb.store)
 	app.Post("/", userHandler.HandlePostUser)
 
 	params := types.CreateUserParams{
